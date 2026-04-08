@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчёт по студентам</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .page {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            color: white;
+            padding: 28px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 24px rgba(124, 58, 237, 0.18);
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.95;
+        }
+
+        .toolbar {
+            margin-bottom: 20px;
+        }
+
+        .toolbar a {
+            display: inline-block;
+            text-decoration: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: white;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .btn-json {
+            background: #2563eb;
+        }
+
+        .btn-main {
+            background: #16a34a;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            padding: 18px;
+            border-radius: 16px;
+            color: white;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-box.total {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .stat-box.active {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+        }
+
+        .stat-box.expelled {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
+        .stat-title {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 1100px) {
+            .layout {
+                grid-template-columns: 1.2fr 0.8fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 22px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+        }
+
+        .bars {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .bar-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .bar-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 14px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #eff6ff;
+        }
+
+        .summary {
+            color: #475569;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="header">
+        <h1>Отчёт по студентам и специальностям</h1>
+        <p>Наглядная аналитическая сводка по состоянию базы данных.</p>
+    </div>
+
+    <div class="toolbar">
+        <a class="btn-json" href="/reports/report/json" target="_blank">Открыть JSON-версию</a>
+        <a class="btn-main" href="/ui" target="_blank">Перейти в основную систему</a>
+    </div>
+
+    <div class="stats">
+        <div class="stat-box total">
+            <div class="stat-title">Всего студентов</div>
+            <div class="stat-value">{{ report.total_students }}</div>
+        </div>
+
+        <div class="stat-box active">
+            <div class="stat-title">Сейчас обучаются</div>
+            <div class="stat-value">{{ report.active_students }}</div>
+        </div>
+
+        <div class="stat-box expelled">
+            <div class="stat-title">Отчислено</div>
+            <div class="stat-value">{{ report.expelled_students }}</div>
+        </div>
+    </div>
+
+    <div class="layout">
+        <div class="card">
+            <h2>Распределение по специальностям</h2>
+            <div class="bars">
+                {% set max_value = 1 %}
+                {% for item in report.by_specialty %}
+                    {% if item.active_students_count > max_value %}
+                        {% set max_value = item.active_students_count %}
+                    {% endif %}
+                {% endfor %}
+
+                {% for item in report.by_specialty %}
+                <div class="bar-item">
+                    <div class="bar-top">
+                        <span>{{ item.specialty_name }}</span>
+                        <span>{{ item.active_students_count }}</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width:
+                            {% if max_value > 0 %}
+                                {{ (item.active_students_count / max_value * 100) | round(0, 'floor') }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        ;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Краткий вывод</h2>
+            <div class="summary">
+                <p><b>Всего студентов в системе:</b> {{ report.total_students }}.</p>
+                <p><b>Продолжают обучение:</b> {{ report.active_students }}.</p>
+                <p><b>Отчислено:</b> {{ report.expelled_students }}.</p>
+                <p>
+                    Таблица и шкалы ниже показывают текущее распределение только тех студентов,
+                    которые имеют статус <b>«учится»</b>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Таблица по специальностям</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>ID специальности</th>
+                <th>Название специальности</th>
+                <th>Количество обучающихся</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in report.by_specialty %}
+            <tr>
+                <td>{{ item.specialty_id }}</td>
+                <td>{{ item.specialty_name }}</td>
+                <td>{{ item.active_students_count }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

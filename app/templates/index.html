@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Учет студентов</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            padding: 28px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 32px;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.95;
+            font-size: 15px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            border: none;
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            background: white;
+            color: #334155;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: 0.2s;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 22px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 22px;
+        }
+
+        .grid-two {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 1100px) {
+            .grid-two {
+                grid-template-columns: 1.1fr 1.4fr;
+            }
+        }
+
+        input, select, button {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #7c3aed;
+            color: white;
+        }
+
+        .btn-refresh {
+            background: #0f766e;
+            color: white;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .form-row input,
+        .form-row select {
+            flex: 1 1 220px;
+        }
+
+        .note {
+            margin-top: 12px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .students-table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            min-width: 900px;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #eff6ff;
+            font-size: 14px;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        .inline-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .small-input {
+            min-width: 180px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .stat-box {
+            padding: 18px;
+            border-radius: 16px;
+            color: white;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-box.total {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .stat-box.active {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+        }
+
+        .stat-box.expelled {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
+        .stat-title {
+            font-size: 14px;
+            opacity: 0.95;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .report-toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .report-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 1100px) {
+            .report-layout {
+                grid-template-columns: 1.2fr 0.8fr;
+            }
+        }
+
+        .bars {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .bar-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .bar-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 14px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+        }
+
+        .report-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .report-summary {
+            color: #475569;
+            line-height: 1.55;
+            font-size: 15px;
+        }
+
+        .chip {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #3730a3;
+            font-size: 13px;
+            font-weight: bold;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .loading {
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 14px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="header">
+        <h1>Система учета студентов</h1>
+        <p>Работа с данными о студентах и просмотр аналитического отчёта на одной странице.</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="students-tab">Управление студентами</button>
+        <button class="tab-btn" data-tab="report-tab">Отчёт</button>
+    </div>
+
+    <div id="students-tab" class="tab-content active">
+        <div class="grid-two">
+            <div class="card">
+                <h2>Добавить студента</h2>
+                <form action="/ui/create" method="post">
+                    <div class="form-row">
+                        <input type="text" name="name" placeholder="ФИО студента" required>
+
+                        <select name="status" required>
+                            {% for item in status_options %}
+                                <option value="{{ item }}">{{ item }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <select name="specialty_id" required>
+                            {% for specialty in specialties %}
+                                <option value="{{ specialty.id }}">
+                                    {{ specialty.id }} — {{ specialty.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <button class="btn-primary" type="submit">Добавить</button>
+                    </div>
+                </form>
+                <div class="note">
+                    Доступные статусы: <b>учится</b>, <b>отчислен</b>.  
+                    Перевод между специальностями выполняется через редактирование записи ниже.
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Краткая информация</h2>
+                <div class="chip">CRUD через HTML-интерфейс</div>
+                <div class="chip">Отчёт на этой же странице</div>
+                <div class="chip">Отчёт хранится в MinIO</div>
+
+                <p class="report-summary">
+                    На этой странице можно добавлять студентов, менять специальность, отмечать отчисление,
+                    а на соседней вкладке сразу видеть итоговую сводку:
+                    сколько студентов обучается, сколько отчислено и как распределяются обучающиеся по специальностям.
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Список студентов</h2>
+
+            <div class="students-table-wrapper">
+                {% if students %}
+                <table>
+                    <thead>
+                    <tr>
+                        <th>UUID</th>
+                        <th>Имя</th>
+                        <th>Статус</th>
+                        <th>Специальность</th>
+                        <th>Действия</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.id }}</td>
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.status }}</td>
+                        <td>{{ student.specialty_name }} (ID: {{ student.specialty_id }})</td>
+                        <td>
+                            <form class="inline-form" action="/ui/update/{{ student.id }}" method="post">
+                                <input class="small-input" type="text" name="name" value="{{ student.name }}" required>
+
+                                <select name="status" required>
+                                    {% for item in status_options %}
+                                        <option value="{{ item }}" {% if item == student.status %}selected{% endif %}>
+                                            {{ item }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+
+                                <select name="specialty_id" required>
+                                    {% for specialty in specialties %}
+                                        <option value="{{ specialty.id }}" {% if specialty.id == student.specialty_id %}selected{% endif %}>
+                                            {{ specialty.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+
+                                <button class="btn-success" type="submit">Сохранить</button>
+                            </form>
+
+                            <form action="/ui/delete/{{ student.id }}" method="post" style="margin-top: 8px;">
+                                <button class="btn-danger" type="submit">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <p>Студентов пока нет.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div id="report-tab" class="tab-content">
+        <div class="card">
+            <h2>Аналитический отчёт</h2>
+
+            <div class="report-toolbar">
+                <button id="loadReportBtn" class="btn-refresh" type="button">Сформировать отчёт</button>
+                <button id="openJsonBtn" class="btn-secondary" type="button">Скачать JSON-файл</button>
+            </div>
+
+            <div id="reportStatus" class="loading">Отчёт будет сформирован при открытии вкладки.</div>
+        </div>
+
+        <div id="reportContent" style="display:none;">
+            <div class="stats">
+                <div class="stat-box total">
+                    <div class="stat-title">Всего студентов</div>
+                    <div id="totalStudentsValue" class="stat-value">0</div>
+                </div>
+
+                <div class="stat-box active">
+                    <div class="stat-title">Сейчас обучаются</div>
+                    <div id="activeStudentsValue" class="stat-value">0</div>
+                </div>
+
+                <div class="stat-box expelled">
+                    <div class="stat-title">Отчислено</div>
+                    <div id="expelledStudentsValue" class="stat-value">0</div>
+                </div>
+            </div>
+
+            <div class="report-layout">
+                <div class="card">
+                    <h2>Распределение обучающихся по специальностям</h2>
+                    <div id="barsContainer" class="bars"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Вывод по отчёту</h2>
+                    <div id="reportSummary" class="report-summary"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Табличное представление</h2>
+                <div class="report-table-wrapper">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID специальности</th>
+                            <th>Название специальности</th>
+                            <th>Количество обучающихся</th>
+                        </tr>
+                        </thead>
+                        <tbody id="reportTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    const reportStatus = document.getElementById('reportStatus');
+    const reportContent = document.getElementById('reportContent');
+    const totalStudentsValue = document.getElementById('totalStudentsValue');
+    const activeStudentsValue = document.getElementById('activeStudentsValue');
+    const expelledStudentsValue = document.getElementById('expelledStudentsValue');
+    const barsContainer = document.getElementById('barsContainer');
+    const reportTableBody = document.getElementById('reportTableBody');
+    const reportSummary = document.getElementById('reportSummary');
+    const loadReportBtn = document.getElementById('loadReportBtn');
+    const openJsonBtn = document.getElementById('openJsonBtn');
+
+    let reportLoadedOnce = false;
+
+    function switchTab(tabId) {
+        tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
+
+        tabContents.forEach(content => {
+            content.classList.toggle('active', content.id === tabId);
+        });
+
+        if (tabId === 'report-tab' && !reportLoadedOnce) {
+            loadReport();
+        }
+    }
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    openJsonBtn.addEventListener('click', () => {
+        window.open('/report/file', '_blank');
+    });
+
+    loadReportBtn.addEventListener('click', loadReport);
+
+    async function loadReport() {
+        reportLoadedOnce = true;
+        reportStatus.style.display = 'block';
+        reportStatus.className = 'loading';
+        reportStatus.textContent = 'Формирование отчёта и загрузка из MinIO...';
+        reportContent.style.display = 'none';
+
+        try {
+            const response = await fetch('/report/json', {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Не удалось получить данные отчёта');
+            }
+
+            const report = await response.json();
+            renderReport(report);
+
+            reportStatus.style.display = 'none';
+            reportContent.style.display = 'block';
+        } catch (error) {
+            reportStatus.style.display = 'block';
+            reportStatus.className = 'error-box';
+            reportStatus.textContent = 'Ошибка загрузки отчёта: ' + error.message;
+            reportContent.style.display = 'none';
+        }
+    }
+
+    function renderReport(report) {
+        totalStudentsValue.textContent = report.total_students;
+        activeStudentsValue.textContent = report.active_students;
+        expelledStudentsValue.textContent = report.expelled_students;
+
+        reportTableBody.innerHTML = '';
+        barsContainer.innerHTML = '';
+
+        const maxCount = Math.max(...report.by_specialty.map(x => x.active_students_count), 1);
+
+        report.by_specialty.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.specialty_id}</td>
+                <td>${item.specialty_name}</td>
+                <td>${item.active_students_count}</td>
+            `;
+            reportTableBody.appendChild(tr);
+
+            const widthPercent = (item.active_students_count / maxCount) * 100;
+
+            const barItem = document.createElement('div');
+            barItem.className = 'bar-item';
+            barItem.innerHTML = `
+                <div class="bar-top">
+                    <span>${item.specialty_name}</span>
+                    <span>${item.active_students_count}</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width: ${widthPercent}%"></div>
+                </div>
+            `;
+            barsContainer.appendChild(barItem);
+        });
+
+        const topSpecialty = [...report.by_specialty].sort((a, b) => b.active_students_count - a.active_students_count)[0];
+
+        reportSummary.innerHTML = `
+            <p><b>Всего студентов в системе:</b> ${report.total_students}.</p>
+            <p><b>Активно обучаются:</b> ${report.active_students}, <b>отчислено:</b> ${report.expelled_students}.</p>
+            <p><b>Наибольшее число обучающихся</b> сейчас у специальности
+            "${topSpecialty ? topSpecialty.specialty_name : 'нет данных'}".</p>
+            <p>В этой лабораторной отчёт не передаётся напрямую: сервис отчётов сохраняет файл в MinIO, а основной сервис скачивает его из хранилища и показывает в интерфейсе.</p>
+        `;
+    }
+</script>
+</body>
+</html>

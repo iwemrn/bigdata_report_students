@@ -1,0 +1,120 @@
+services:
+  db:
+    image: postgres:15
+    container_name: students_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: students_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d students_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: students_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: students_rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  minio:
+    image: minio/minio:latest
+    container_name: students_minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: ./app
+    container_name: students_api
+    restart: on-failure
+    environment:
+      DATABASE_URL: postgresql://admin:admin@db:5432/students_db
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: reports
+      MINIO_SECURE: "false"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASSWORD: admin
+      REPORT_REQUEST_QUEUE: report_requests
+      REPORT_RESPONSE_QUEUE: report_responses
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      report_service:
+        condition: service_started
+
+  report_service:
+    build: ./report_service
+    container_name: students_report_api
+    restart: on-failure
+    environment:
+      DATABASE_URL: postgresql://admin:admin@db:5432/students_db
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: reports
+      MINIO_SECURE: "false"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASSWORD: admin
+      REPORT_REQUEST_QUEUE: report_requests
+      REPORT_RESPONSE_QUEUE: report_responses
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  minio_data:
